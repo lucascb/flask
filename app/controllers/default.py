@@ -8,12 +8,12 @@ from app.models.tables import User
 def user_loader(id):
     return User.query.get(id)
 
-@app.route("/index")
+@app.route("/index/")
 @app.route("/")
 def index():
     return render_template("index.html")
 
-@app.route("/login", methods=["GET", "POST"])
+@app.route("/login/", methods=["GET", "POST"])
 def login():
     form = LoginForm()
     if form.validate_on_submit():
@@ -21,9 +21,11 @@ def login():
         if user and user.password == form.password.data:
             login_user(user)
             flash("Successful login")
-            redirect(url_for('index'))
+            return redirect(url_for('index'))
         else:
             flash("Invalid login")
+    elif form.errors:
+        flash("Error in login")
     return render_template('login.html', form=form)
 
 @app.route("/logout/")
@@ -33,14 +35,14 @@ def logout():
 
 @app.route("/teste/")
 def teste():
-    #u = User('lucascb', '1234', 'Lucas Bernardes', 'lucascbernardes@live.com')
-    #db.session.add(u)
-    #db.session.commit()
-
-    user = User.query.filter_by(username='lucascb').first()
-    users = User.query.filter_by(username='lucascb').all()
-
-    db.session.delete(user)
+    u = User('lucascb', '1234', 'Lucas Bernardes', 'lucascbernardes@live.com')
+    db.session.add(u)
     db.session.commit()
-    print(user, users)
+
+    #user = User.query.filter_by(username='lucascb').first()
+    #users = User.query.filter_by(username='lucascb').all()
+
+    #db.session.delete(user)
+    #db.session.commit()
+    #print(user, users)
     return "OK"
