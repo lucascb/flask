@@ -1,4 +1,5 @@
 from app import db
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 class User(db.Model):
@@ -25,9 +26,14 @@ class User(db.Model):
     def get_id(self):
         return self.id
 
-    def __init__(self, username, password, name, email):
+    def generate_password(self, password):
+        self.password = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password, password)
+
+    def __init__(self, username, name, email):
         self.username = username
-        self.password = password
         self.name     = name
         self.email    = email
 
@@ -50,6 +56,7 @@ class Post(db.Model):
 
     def __repr__(self):
         return "<Post {}>".format(self.id)
+
 
 class Follow(db.Model):
     __tablename__ = "follow"
