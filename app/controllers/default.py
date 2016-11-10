@@ -1,8 +1,8 @@
 from app import app, db, lm
 from flask import render_template, flash, redirect, url_for
-from flask_login import login_user, logout_user, login_required
-from app.models.forms  import LoginForm, RegisterForm
-from app.models.tables import User
+from flask_login import login_user, logout_user, login_required, current_user
+from app.models.forms  import LoginForm, RegisterForm, TwitForm
+from app.models.tables import User, Post, Follow
 
 @lm.user_loader
 def user_loader(id):
@@ -48,10 +48,56 @@ def logout():
     logout_user()
     return redirect(url_for('index'))
 
-@app.route("/dashboard/")
+@app.route("/profile/<username>")
+def profile(username):
+    user = User.query.filter_by(username=username).first_or_404()
+    twits = Post.query.filter_by(user_id=user.id).all()
+    if current_user.id != user.id:
+        following = Follow.query.filter_by(user_id=user.id,
+                                           follower_id=current_user.id
+                                          ).first()
+    else:
+        following = None
+    return render_template('profile.html', user=user,
+                                           twits=twits,
+                                           following=following)
+
+@app.route("/follow/<int:id>")
+@login_required
+def follow(id):
+    u = User.query.get(id)
+    f = Follow(id, current_user.id)
+    db.session.add(f)
+    db.session.commit()
+    return redirect(url_for('profile', username=u.username))
+
+@app.route("/unfollow/<int:id>")
+@login_required
+def unfollow(id):
+    u = User.query.get(id)
+    f = Follow.query.filter_by(user_id=u.id, follower_id=current_user.id).first()
+    db.session.delete(f)
+    db.session.commit()
+    return redirect(url_for('profile', username=u.username))
+
+@app.route("/dashboard/", methods=["GET", "POST"])
 @login_required
 def dashboard():
-    return "OK"
+    form = TwitForm()
+    if form.validate_on_submit():
+        new_twit = Post(content=form.content.data, user_id=current_user.id)
+        db.session.add(new_twit)
+        db.session.commit()
+
+
+    following = Follow.query.filter_by(follower_id=current_user.id).all()
+    twits = []
+    for follow in following:
+        t = Post.query.filter_by(user_id=follow.user.id).all()
+        twits.extend(t)
+    my_twits = Post.query.filter_by(user_id=current_user.id).all()
+    twits.extend(my_twits)
+    return render_template('dashboard.html', twits=twits, form=form)
 
 @app.route("/teste/")
 def teste():

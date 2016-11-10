@@ -67,3 +67,10 @@ class Follow(db.Model):
 
     user = db.relationship('User', foreign_keys=user_id)
     follower = db.relationship('User', foreign_keys=follower_id)
+
+    def __init__(self, user_id, follower_id):
+        self.user_id = user_id
+        self.follower_id = follower_id
+
+    def __repr__(self):
+        return "<Follow {}>".format(self.id)
